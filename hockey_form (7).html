@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hockey Form – 6 lig</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:16px}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:4px}
+.sub{color:#94a3b8;font-size:.85rem;margin-bottom:18px}
+section{background:#1e293b;border-radius:12px;padding:14px 16px;margin-bottom:16px;border:1px solid #334155}
+.sec-title{font-size:1rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-title .badge{font-size:.7rem;padding:2px 8px;border-radius:999px;font-weight:600}
+.badge-today{background:#0369a1;color:#fff}
+.badge-yest{background:#0f766e;color:#fff}
+.badge-form{background:#1d4ed8;color:#fff}
+.empty-box{border:1px dashed #475569;border-radius:10px;padding:22px;text-align:center;color:#94a3b8;cursor:pointer;transition:.15s}
+.empty-box:hover{border-color:#38bdf8;color:#e2e8f0;background:#0f172a}
+.empty-box strong{display:block;font-size:1rem;color:#f1f5f9;margin-bottom:4px}
+.match-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.match-card{background:#0f172a;border-radius:8px;padding:8px 10px;border:1px solid #334155;display:flex;flex-direction:column;gap:4px}
+.match-card .row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
+.match-card .team{display:flex;align-items:center;gap:6px;font-size:.78rem;line-height:1.2;min-width:0}
+.match-card .team.home{justify-content:flex-end;text-align:right}
+.match-card .team.away{justify-content:flex-start;text-align:left}
+.match-card .team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match-card .team img,.match-card .team .fallback{width:22px;height:22px;flex-shrink:0;object-fit:contain;border-radius:3px}
+.match-card .score{font-weight:700;font-size:1rem;text-align:center;min-width:42px;color:#f1f5f9}
+.match-card .meta{font-size:.68rem;color:#64748b;text-align:center}
+.badge{font-size:.6rem;padding:1px 5px;border-radius:4px;font-weight:600}
+.badge.done{background:#065f46;color:#6ee7b7}
+.badge.wait{background:#1e3a5f;color:#7dd3fc}
+.league{margin-bottom:14px}
+.league-title{display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:8px;font-size:.9rem}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.tiles{display:flex;flex-wrap:wrap;gap:6px}
+.tile{width:56px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:6px 2px;text-align:center;cursor:pointer;transition:.12s}
+.tile:hover,.tile.active{border-color:#38bdf8;background:#1e293b}
+.tile img,.tile .fallback{width:32px;height:32px;object-fit:contain;margin:0 auto;display:block;border-radius:3px}
+.fallback{display:flex;align-items:center;justify-content:center;background:#334155;color:#94a3b8;font-size:.65rem;font-weight:700}
+.tile .cnt{font-size:.58rem;color:#64748b;margin-top:2px}
+.detail{margin-top:12px;background:#0f172a;border-radius:10px;padding:12px;border:1px solid #334155}
+.detail h3{font-size:.95rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.detail table{width:100%;border-collapse:collapse;font-size:.85rem}
+.detail th{text-align:left;color:#94a3b8;font-weight:500;padding:4px 6px;border-bottom:1px solid #334155}
+.detail td{padding:5px 6px;border-bottom:1px solid #1e293b}
+.detail td.w{color:#4ade80;font-weight:600}
+.detail td.l{color:#f87171;font-weight:600}
+.detail td.g{color:#38bdf8;font-weight:600}
+.detail td.empty{color:#64748b;text-align:center}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.btn{background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;font-weight:500}
+.btn:hover{background:#2563eb}
+.btn.secondary{background:#334155}
+.btn.secondary:hover{background:#475569}
+.btn.danger{background:#7f1d1d}
+#status{font-size:.8rem;color:#94a3b8;margin-bottom:10px;min-height:1.2em}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:#1e293b;border-radius:14px;width:min(640px,100%);max-height:90vh;overflow:auto;border:1px solid #475569;padding:18px}
+.modal h2{font-size:1.1rem;margin-bottom:8px}
+.modal p{font-size:.85rem;color:#94a3b8;margin-bottom:12px}
+#pasteArea{width:100%;min-height:180px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;padding:10px;font-family:ui-monospace,monospace;font-size:.8rem;resize:vertical}
+.modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+#parseLog{margin-top:12px;font-size:.8rem;color:#94a3b8;max-height:160px;overflow:auto}
+#parseLog b{color:#e2e8f0}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<h1>Hockey Form – 6 lig</h1>
+<p class="sub">Mecze dziś · wczoraj · forma drużyn. Wklej wyniki Flashscore przez „dodaj”.</p>
+<div id="status"></div>
+
+<!-- MECZE DZIŚ -->
+<section id="sec-today">
+  <div class="sec-title"><span class="badge badge-today">DZIŚ</span> Mecze dziś</div>
+  <div id="todayBox"></div>
+</section>
+
+<!-- MECZE WCZORAJ -->
+<section id="sec-yest">
+  <div class="sec-title"><span class="badge badge-yest">WCZORAJ</span> Mecze wczoraj</div>
+  <div id="yestBox"></div>
+</section>
+
+<!-- FORMA -->
+<section id="sec-form">
+  <div class="sec-title"><span class="badge badge-form">FORMA</span> Forma drużyn</div>
+  <div class="toolbar">
+    <button class="btn secondary" onclick="openPasteModal()">Wklej wyniki</button>
+    <button class="btn secondary" onclick="forceSeed()">Przeładuj seed</button>
+    <button class="btn secondary" onclick="collapseAll()">Zwiń wszystko</button>
+  </div>
+  <div id="root"></div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closePasteModal()">
+  <div class="modal">
+    <h2>Wklej wyniki Flashscore</h2>
+    <p>Wklej blok z wynikami (Koniec / Po dogrywce / Po rzutach) albo listę meczów „dziś”. Parser dopisze do formy i list.</p>
+    <textarea id="pasteArea" placeholder="Extraliga&#10;CZECHY:&#10;Tabela&#10;Koniec&#10;Sparta Praga&#10;Vitkovice&#10;30&#10;..."></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="runParse()">Przetwórz</button>
+      <button class="btn secondary" onclick="document.getElementById('pasteArea').value=''">Wyczyść</button>
+      <button class="btn secondary" onclick="closePasteModal()">Zamknij</button>
+    </div>
+    <div id="parseLog"></div>
+  </div>
+</div>
+
+<script>
+const SEED = {"HC Dynamo Pardubice": [{"date": "2026-10-11", "opp": "HC Oceláři Třinec", "gf": 5, "ga": 4, "res": "5:4"}, {"date": "2026-10-09", "opp": "HC Vítkovice Ridera", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-04", "opp": "HC Sparta Praha", "gf": 6, "ga": 4, "res": "6:4"}, {"date": "2026-10-02", "opp": "HC Škoda Plzeň", "gf": 4, "ga": 2, "res": "4:2"}], "HC Oceláři Třinec": [{"date": "2026-10-11", "opp": "HC Dynamo Pardubice", "gf": 4, "ga": 5, "res": "4:5"}, {"date": "2026-10-09", "opp": "Mountfield HK", "gf": 5, "ga": 2, "res": "5:2"}, {"date": "2026-10-04", "opp": "HC Olomouc", "gf": 9, "ga": 0, "res": "9:0"}, {"date": "2026-10-02", "opp": "HC Verva Litvínov", "gf": 3, "ga": 2, "res": "3:2"}], "HC Sparta Praha": [{"date": "2026-10-11", "opp": "HC Vítkovice Ridera", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-08", "opp": "HC Kometa Brno", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-04", "opp": "HC Dynamo Pardubice", "gf": 4, "ga": 6, "res": "4:6"}, {"date": "2026-10-01", "opp": "Banes Motor České Budějovice", "gf": 4, "ga": 2, "res": "4:2"}], "HC Vítkovice Ridera": [{"date": "2026-10-11", "opp": "HC Sparta Praha", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-09", "opp": "HC Dynamo Pardubice", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-04", "opp": "Mountfield HK", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-02", "opp": "HC Energie Karlovy Vary", "gf": 0, "ga": 3, "res": "0:3"}], "BK Mladá Boleslav": [{"date": "2026-10-11", "opp": "HC Verva Litvínov", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-09", "opp": "Rytíři Kladno", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-04", "opp": "Bílí Tygři Liberec", "gf": 3, "ga": 5, "res": "3:5"}, {"date": "2026-10-02", "opp": "HC Kometa Brno", "gf": 2, "ga": 3, "res": "2:3"}], "HC Verva Litvínov": [{"date": "2026-10-11", "opp": "BK Mladá Boleslav", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-09", "opp": "HC Olomouc", "gf": 3, "ga": 1, "res": "3:1"}, {"date": "2026-10-04", "opp": "Rytíři Kladno", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-02", "opp": "HC Oceláři Třinec", "gf": 2, "ga": 3, "res": "2:3"}], "Banes Motor České Budějovice": [{"date": "2026-10-11", "opp": "Bílí Tygři Liberec", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-08", "opp": "HC Škoda Plzeň", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-05", "opp": "HC Kometa Brno", "gf": 5, "ga": 1, "res": "5:1"}, {"date": "2026-10-01", "opp": "HC Sparta Praha", "gf": 2, "ga": 4, "res": "2:4"}], "Bílí Tygři Liberec": [{"date": "2026-10-11", "opp": "Banes Motor České Budějovice", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-09", "opp": "HC Energie Karlovy Vary", "gf": 5, "ga": 0, "res": "5:0"}, {"date": "2026-10-04", "opp": "BK Mladá Boleslav", "gf": 5, "ga": 3, "res": "5:3"}, {"date": "2026-10-02", "opp": "HC Olomouc", "gf": 2, "ga": 0, "res": "2:0"}], "HC Energie Karlovy Vary": [{"date": "2026-10-11", "opp": "Rytíři Kladno", "gf": 3, "ga": 1, "res": "3:1"}, {"date": "2026-10-09", "opp": "Bílí Tygři Liberec", "gf": 0, "ga": 5, "res": "0:5"}, {"date": "2026-10-04", "opp": "HC Škoda Plzeň", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-02", "opp": "HC Vítkovice Ridera", "gf": 3, "ga": 0, "res": "3:0"}], "Rytíři Kladno": [{"date": "2026-10-11", "opp": "HC Energie Karlovy Vary", "gf": 1, "ga": 3, "res": "1:3"}, {"date": "2026-10-09", "opp": "BK Mladá Boleslav", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-04", "opp": "HC Verva Litvínov", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-02", "opp": "Mountfield HK", "gf": 3, "ga": 4, "res": "3:4"}], "HC Kometa Brno": [{"date": "2026-10-11", "opp": "HC Škoda Plzeň", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-08", "opp": "HC Sparta Praha", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-05", "opp": "Banes Motor České Budějovice", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-02", "opp": "BK Mladá Boleslav", "gf": 3, "ga": 2, "res": "3:2"}], "HC Škoda Plzeň": [{"date": "2026-10-11", "opp": "HC Kometa Brno", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-08", "opp": "Banes Motor České Budějovice", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-04", "opp": "HC Energie Karlovy Vary", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-02", "opp": "HC Dynamo Pardubice", "gf": 2, "ga": 4, "res": "2:4"}], "Mountfield HK": [{"date": "2026-10-11", "opp": "HC Olomouc", "gf": 3, "ga": 1, "res": "3:1"}, {"date": "2026-10-09", "opp": "HC Oceláři Třinec", "gf": 2, "ga": 5, "res": "2:5"}, {"date": "2026-10-04", "opp": "HC Vítkovice Ridera", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-02", "opp": "Rytíři Kladno", "gf": 4, "ga": 3, "res": "4:3"}], "HC Olomouc": [{"date": "2026-10-11", "opp": "Mountfield HK", "gf": 1, "ga": 3, "res": "1:3"}, {"date": "2026-10-09", "opp": "HC Verva Litvínov", "gf": 1, "ga": 3, "res": "1:3"}, {"date": "2026-10-04", "opp": "HC Oceláři Třinec", "gf": 0, "ga": 9, "res": "0:9"}, {"date": "2026-10-02", "opp": "Bílí Tygři Liberec", "gf": 0, "ga": 2, "res": "0:2"}], "Adler Mannheim": [{"date": "2026-10-11", "opp": "Straubing Tigers", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-09", "opp": "Nürnberg Ice Tigers", "gf": 5, "ga": 2, "res": "5:2"}, {"date": "2026-10-04", "opp": "Grizzlys Wolfsburg", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-01", "opp": "Iserlohn Roosters", "gf": 6, "ga": 1, "res": "6:1"}], "Straubing Tigers": [{"date": "2026-10-11", "opp": "Adler Mannheim", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-09", "opp": "Iserlohn Roosters", "gf": 11, "ga": 4, "res": "11:4"}, {"date": "2026-10-04", "opp": "Schwenninger Wild Wings", "gf": 4, "ga": 2, "res": "4:2"}], "ERC Ingolstadt": [{"date": "2026-10-11", "opp": "Löwen Frankfurt", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-09", "opp": "EHC Red Bull München", "gf": 5, "ga": 1, "res": "5:1"}, {"date": "2026-10-04", "opp": "Kölner Haie", "gf": 3, "ga": 6, "res": "3:6"}], "Löwen Frankfurt": [{"date": "2026-10-11", "opp": "ERC Ingolstadt", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-04", "opp": "Pinguins Bremerhaven", "gf": 1, "ga": 2, "res": "1:2"}], "Krefeld Pinguine": [{"date": "2026-10-11", "opp": "Augsburger Panther", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-04", "opp": "Iserlohn Roosters", "gf": 2, "ga": 3, "res": "2:3"}], "Augsburger Panther": [{"date": "2026-10-11", "opp": "Krefeld Pinguine", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-09", "opp": "Pinguins Bremerhaven", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-04", "opp": "EHC Red Bull München", "gf": 2, "ga": 4, "res": "2:4"}], "Iserlohn Roosters": [{"date": "2026-10-11", "opp": "Grizzlys Wolfsburg", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-09", "opp": "Straubing Tigers", "gf": 4, "ga": 11, "res": "4:11"}, {"date": "2026-10-04", "opp": "Krefeld Pinguine", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-01", "opp": "Adler Mannheim", "gf": 1, "ga": 6, "res": "1:6"}], "Grizzlys Wolfsburg": [{"date": "2026-10-11", "opp": "Iserlohn Roosters", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-09", "opp": "Eisbären Berlin", "gf": 0, "ga": 5, "res": "0:5"}, {"date": "2026-10-04", "opp": "Adler Mannheim", "gf": 4, "ga": 1, "res": "4:1"}], "Kölner Haie": [{"date": "2026-10-11", "opp": "Nürnberg Ice Tigers", "gf": 4, "ga": 2, "res": "4:2"}, {"date": "2026-10-09", "opp": "Schwenninger Wild Wings", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-04", "opp": "ERC Ingolstadt", "gf": 6, "ga": 3, "res": "6:3"}], "Nürnberg Ice Tigers": [{"date": "2026-10-11", "opp": "Kölner Haie", "gf": 2, "ga": 4, "res": "2:4"}, {"date": "2026-10-09", "opp": "Adler Mannheim", "gf": 2, "ga": 5, "res": "2:5"}, {"date": "2026-10-04", "opp": "Eisbären Berlin", "gf": 1, "ga": 4, "res": "1:4"}], "Schwenninger Wild Wings": [{"date": "2026-10-11", "opp": "EHC Red Bull München", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-09", "opp": "Kölner Haie", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-04", "opp": "Straubing Tigers", "gf": 2, "ga": 4, "res": "2:4"}], "EHC Red Bull München": [{"date": "2026-10-11", "opp": "Schwenninger Wild Wings", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-09", "opp": "ERC Ingolstadt", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-04", "opp": "Augsburger Panther", "gf": 4, "ga": 2, "res": "4:2"}], "Pinguins Bremerhaven": [{"date": "2026-10-11", "opp": "Eisbären Berlin", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-09", "opp": "Augsburger Panther", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-04", "opp": "Löwen Frankfurt", "gf": 2, "ga": 1, "res": "2:1"}], "Eisbären Berlin": [{"date": "2026-10-11", "opp": "Pinguins Bremerhaven", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-09", "opp": "Grizzlys Wolfsburg", "gf": 5, "ga": 0, "res": "5:0"}, {"date": "2026-10-04", "opp": "Nürnberg Ice Tigers", "gf": 4, "ga": 1, "res": "4:1"}], "Färjestad BK": [{"date": "2026-10-10", "opp": "Malmö Redhawks", "gf": 6, "ga": 2, "res": "6:2"}, {"date": "2026-10-08", "opp": "Skellefteå AIK", "gf": 5, "ga": 1, "res": "5:1"}, {"date": "2026-10-03", "opp": "HV71", "gf": 3, "ga": 1, "res": "3:1"}, {"date": "2026-10-01", "opp": "Djurgårdens IF", "gf": 4, "ga": 0, "res": "4:0"}], "Malmö Redhawks": [{"date": "2026-10-10", "opp": "Färjestad BK", "gf": 2, "ga": 6, "res": "2:6"}, {"date": "2026-10-08", "opp": "Luleå HF", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-03", "opp": "Brynäs IF", "gf": 1, "ga": 0, "res": "1:0"}, {"date": "2026-10-01", "opp": "Skellefteå AIK", "gf": 3, "ga": 4, "res": "3:4"}], "Luleå HF": [{"date": "2026-10-10", "opp": "Timrå IK", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-08", "opp": "Malmö Redhawks", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-03", "opp": "Örebro HK", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-01", "opp": "Linköping HC", "gf": 2, "ga": 0, "res": "2:0"}, {"date": "2026-09-29", "opp": "Skellefteå AIK", "gf": 1, "ga": 6, "res": "1:6"}], "Timrå IK": [{"date": "2026-10-10", "opp": "Luleå HF", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-08", "opp": "Frölunda HC", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-03", "opp": "Skellefteå AIK", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-01", "opp": "Rögle BK", "gf": 1, "ga": 4, "res": "1:4"}], "HV71": [{"date": "2026-10-10", "opp": "Brynäs IF", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-08", "opp": "Rögle BK", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-03", "opp": "Färjestad BK", "gf": 1, "ga": 3, "res": "1:3"}, {"date": "2026-10-01", "opp": "Örebro HK", "gf": 2, "ga": 1, "res": "2:1"}], "Brynäs IF": [{"date": "2026-10-10", "opp": "HV71", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-08", "opp": "IF Björklöven", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-03", "opp": "Malmö Redhawks", "gf": 0, "ga": 1, "res": "0:1"}, {"date": "2026-10-01", "opp": "Frölunda HC", "gf": 1, "ga": 2, "res": "1:2"}], "Djurgårdens IF": [{"date": "2026-10-10", "opp": "Linköping HC", "gf": 5, "ga": 1, "res": "5:1"}, {"date": "2026-10-08", "opp": "Örebro HK", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-03", "opp": "Frölunda HC", "gf": 2, "ga": 4, "res": "2:4"}, {"date": "2026-10-01", "opp": "Färjestad BK", "gf": 0, "ga": 4, "res": "0:4"}], "Linköping HC": [{"date": "2026-10-10", "opp": "Djurgårdens IF", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-08", "opp": "Växjö Lakers", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-03", "opp": "IF Björklöven", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-01", "opp": "Luleå HF", "gf": 0, "ga": 2, "res": "0:2"}], "IF Björklöven": [{"date": "2026-10-10", "opp": "Frölunda HC", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-08", "opp": "Brynäs IF", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-03", "opp": "Linköping HC", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-01", "opp": "Växjö Lakers", "gf": 4, "ga": 2, "res": "4:2"}], "Frölunda HC": [{"date": "2026-10-10", "opp": "IF Björklöven", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-08", "opp": "Timrå IK", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-03", "opp": "Djurgårdens IF", "gf": 4, "ga": 2, "res": "4:2"}, {"date": "2026-10-01", "opp": "Brynäs IF", "gf": 2, "ga": 1, "res": "2:1"}], "Örebro HK": [{"date": "2026-10-10", "opp": "Växjö Lakers", "gf": 4, "ga": 2, "res": "4:2"}, {"date": "2026-10-08", "opp": "Djurgårdens IF", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-03", "opp": "Luleå HF", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-01", "opp": "HV71", "gf": 1, "ga": 2, "res": "1:2"}], "Växjö Lakers": [{"date": "2026-10-10", "opp": "Örebro HK", "gf": 2, "ga": 4, "res": "2:4"}, {"date": "2026-10-08", "opp": "Linköping HC", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-03", "opp": "Rögle BK", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-01", "opp": "IF Björklöven", "gf": 2, "ga": 4, "res": "2:4"}], "Skellefteå AIK": [{"date": "2026-10-10", "opp": "Rögle BK", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-08", "opp": "Färjestad BK", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-03", "opp": "Timrå IK", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-01", "opp": "Malmö Redhawks", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-09-29", "opp": "Luleå HF", "gf": 6, "ga": 1, "res": "6:1"}], "Rögle BK": [{"date": "2026-10-10", "opp": "Skellefteå AIK", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-08", "opp": "HV71", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-03", "opp": "Växjö Lakers", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-01", "opp": "Timrå IK", "gf": 4, "ga": 1, "res": "4:1"}], "Jokerit": [{"date": "2026-10-10", "opp": "Ilves", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-08", "opp": "HIFK", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-03", "opp": "SaiPa", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-02", "opp": "Tappara", "gf": 2, "ga": 3, "res": "2:3"}], "Ilves": [{"date": "2026-10-10", "opp": "Jokerit", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-09", "opp": "Lukko", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-07", "opp": "Sport", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-03", "opp": "Kiekko-Espoo", "gf": 6, "ga": 4, "res": "6:4"}], "Tappara": [{"date": "2026-10-10", "opp": "TPS", "gf": 4, "ga": 3, "res": "4:3"}, {"date": "2026-10-09", "opp": "KalPa", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-02", "opp": "Jokerit", "gf": 3, "ga": 2, "res": "3:2"}], "TPS": [{"date": "2026-10-10", "opp": "Tappara", "gf": 3, "ga": 4, "res": "3:4"}, {"date": "2026-10-03", "opp": "JYP", "gf": 4, "ga": 1, "res": "4:1"}], "Jukurit": [{"date": "2026-10-10", "opp": "Kärpät", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-09", "opp": "KooKoo", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-07", "opp": "Ässät", "gf": 0, "ga": 1, "res": "0:1"}], "Kärpät": [{"date": "2026-10-10", "opp": "Jukurit", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-09", "opp": "Pelicans", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-07", "opp": "Kiekko-Espoo", "gf": 8, "ga": 7, "res": "8:7"}], "HIFK": [{"date": "2026-10-10", "opp": "KalPa", "gf": 6, "ga": 1, "res": "6:1"}, {"date": "2026-10-08", "opp": "Jokerit", "gf": 2, "ga": 3, "res": "2:3"}], "KalPa": [{"date": "2026-10-10", "opp": "HIFK", "gf": 1, "ga": 6, "res": "1:6"}, {"date": "2026-10-09", "opp": "Tappara", "gf": 2, "ga": 3, "res": "2:3"}], "HPK": [{"date": "2026-10-10", "opp": "KooKoo", "gf": 5, "ga": 3, "res": "5:3"}, {"date": "2026-10-09", "opp": "Ässät", "gf": 3, "ga": 2, "res": "3:2"}], "KooKoo": [{"date": "2026-10-10", "opp": "HPK", "gf": 3, "ga": 5, "res": "3:5"}, {"date": "2026-10-09", "opp": "Jukurit", "gf": 4, "ga": 1, "res": "4:1"}], "Kiekko-Espoo": [{"date": "2026-10-09", "opp": "JYP", "gf": 6, "ga": 1, "res": "6:1"}, {"date": "2026-10-07", "opp": "Kärpät", "gf": 7, "ga": 8, "res": "7:8"}, {"date": "2026-10-03", "opp": "Ilves", "gf": 4, "ga": 6, "res": "4:6"}], "JYP": [{"date": "2026-10-09", "opp": "Kiekko-Espoo", "gf": 1, "ga": 6, "res": "1:6"}, {"date": "2026-10-08", "opp": "SaiPa", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-03", "opp": "TPS", "gf": 1, "ga": 4, "res": "1:4"}], "Lukko": [{"date": "2026-10-09", "opp": "Ilves", "gf": 5, "ga": 1, "res": "5:1"}], "Pelicans": [{"date": "2026-10-09", "opp": "Kärpät", "gf": 2, "ga": 3, "res": "2:3"}], "Ässät": [{"date": "2026-10-09", "opp": "HPK", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-07", "opp": "Jukurit", "gf": 1, "ga": 0, "res": "1:0"}], "SaiPa": [{"date": "2026-10-08", "opp": "JYP", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-03", "opp": "Jokerit", "gf": 3, "ga": 2, "res": "3:2"}], "Sport": [{"date": "2026-10-07", "opp": "Ilves", "gf": 2, "ga": 1, "res": "2:1"}], "Cracovia": [{"date": "2026-10-11", "opp": "GKS Katowice", "gf": 4, "ga": 2, "res": "4:2"}, {"date": "2026-10-09", "opp": "GKS Tychy", "gf": 2, "ga": 1, "res": "2:1"}], "GKS Katowice": [{"date": "2026-10-11", "opp": "Cracovia", "gf": 2, "ga": 4, "res": "2:4"}, {"date": "2026-10-09", "opp": "Polonia Bytom", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-04", "opp": "KH Energa Toruń", "gf": 7, "ga": 0, "res": "7:0"}], "GKS Tychy": [{"date": "2026-10-11", "opp": "STS Sanok", "gf": 11, "ga": 0, "res": "11:0"}, {"date": "2026-10-09", "opp": "Cracovia", "gf": 1, "ga": 2, "res": "1:2"}, {"date": "2026-10-04", "opp": "Polonia Bytom", "gf": 2, "ga": 1, "res": "2:1"}], "STS Sanok": [{"date": "2026-10-11", "opp": "GKS Tychy", "gf": 0, "ga": 11, "res": "0:11"}, {"date": "2026-10-09", "opp": "Podhale Nowy Targ", "gf": 3, "ga": 0, "res": "3:0"}], "JKH GKS Jastrzębie": [{"date": "2026-10-11", "opp": "Podhale Nowy Targ", "gf": 5, "ga": 0, "res": "5:0"}, {"date": "2026-10-09", "opp": "Unia Oświęcim", "gf": 5, "ga": 4, "res": "5:4"}, {"date": "2026-10-04", "opp": "Zagłębie Sosnowiec", "gf": 2, "ga": 4, "res": "2:4"}], "Podhale Nowy Targ": [{"date": "2026-10-11", "opp": "JKH GKS Jastrzębie", "gf": 0, "ga": 5, "res": "0:5"}, {"date": "2026-10-09", "opp": "STS Sanok", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-04", "opp": "Unia Oświęcim", "gf": 0, "ga": 8, "res": "0:8"}], "KH Energa Toruń": [{"date": "2026-10-11", "opp": "Unia Oświęcim", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-09", "opp": "Zagłębie Sosnowiec", "gf": 2, "ga": 6, "res": "2:6"}, {"date": "2026-10-04", "opp": "GKS Katowice", "gf": 0, "ga": 7, "res": "0:7"}], "Unia Oświęcim": [{"date": "2026-10-11", "opp": "KH Energa Toruń", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-09", "opp": "JKH GKS Jastrzębie", "gf": 4, "ga": 5, "res": "4:5"}, {"date": "2026-10-04", "opp": "Podhale Nowy Targ", "gf": 8, "ga": 0, "res": "8:0"}], "Polonia Bytom": [{"date": "2026-10-11", "opp": "Zagłębie Sosnowiec", "gf": 7, "ga": 2, "res": "7:2"}, {"date": "2026-10-09", "opp": "GKS Katowice", "gf": 2, "ga": 1, "res": "2:1"}, {"date": "2026-10-04", "opp": "GKS Tychy", "gf": 1, "ga": 2, "res": "1:2"}], "Zagłębie Sosnowiec": [{"date": "2026-10-11", "opp": "Polonia Bytom", "gf": 2, "ga": 7, "res": "2:7"}, {"date": "2026-10-09", "opp": "KH Energa Toruń", "gf": 6, "ga": 2, "res": "6:2"}, {"date": "2026-10-04", "opp": "JKH GKS Jastrzębie", "gf": 4, "ga": 2, "res": "4:2"}], "HC Košice": [{"date": "2026-10-11", "opp": "HK Dukla Trenčín", "gf": 3, "ga": 2, "res": "3:2"}, {"date": "2026-10-09", "opp": "HKM Zvolen", "gf": 4, "ga": 1, "res": "4:1"}, {"date": "2026-10-02", "opp": "HK 32 Liptovský Mikuláš", "gf": 0, "ga": 3, "res": "0:3"}], "HK Dukla Trenčín": [{"date": "2026-10-11", "opp": "HC Košice", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-09", "opp": "HK Nitra", "gf": 5, "ga": 2, "res": "5:2"}, {"date": "2026-10-04", "opp": "HC Prešov", "gf": 3, "ga": 2, "res": "3:2"}], "HC Slovan Bratislava": [{"date": "2026-10-11", "opp": "HC Prešov", "gf": 8, "ga": 2, "res": "8:2"}, {"date": "2026-10-09", "opp": "HC ’05 Banská Bystrica", "gf": 6, "ga": 2, "res": "6:2"}], "HC Prešov": [{"date": "2026-10-11", "opp": "HC Slovan Bratislava", "gf": 2, "ga": 8, "res": "2:8"}, {"date": "2026-10-09", "opp": "HK Spišská Nová Ves", "gf": 4, "ga": 5, "res": "4:5"}, {"date": "2026-10-04", "opp": "HK Dukla Trenčín", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-10-02", "opp": "HKM Zvolen", "gf": 2, "ga": 3, "res": "2:3"}, {"date": "2026-09-29", "opp": "HK Dukla Michalovce", "gf": 3, "ga": 4, "res": "3:4"}], "HC ’05 Banská Bystrica": [{"date": "2026-10-11", "opp": "HK 32 Liptovský Mikuláš", "gf": 5, "ga": 2, "res": "5:2"}, {"date": "2026-10-09", "opp": "HC Slovan Bratislava", "gf": 2, "ga": 6, "res": "2:6"}], "HK 32 Liptovský Mikuláš": [{"date": "2026-10-11", "opp": "HC ’05 Banská Bystrica", "gf": 2, "ga": 5, "res": "2:5"}, {"date": "2026-10-09", "opp": "Vlci Žilina", "gf": 0, "ga": 4, "res": "0:4"}, {"date": "2026-10-04", "opp": "HK Poprad", "gf": 1, "ga": 5, "res": "1:5"}, {"date": "2026-10-02", "opp": "HC Košice", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-09-29", "opp": "HK Nitra", "gf": 5, "ga": 3, "res": "5:3"}], "HK Nitra": [{"date": "2026-10-11", "opp": "HK Spišská Nová Ves", "gf": 3, "ga": 0, "res": "3:0"}, {"date": "2026-10-09", "opp": "HK Dukla Trenčín", "gf": 2, "ga": 5, "res": "2:5"}, {"date": "2026-09-29", "opp": "HK 32 Liptovský Mikuláš", "gf": 3, "ga": 5, "res": "3:5"}], "HK Spišská Nová Ves": [{"date": "2026-10-11", "opp": "HK Nitra", "gf": 0, "ga": 3, "res": "0:3"}, {"date": "2026-10-09", "opp": "HC Prešov", "gf": 5, "ga": 4, "res": "5:4"}], "Vlci Žilina": [{"date": "2026-10-11", "opp": "HK Dukla Michalovce", "gf": 3, "ga": 1, "res": "3:1"}, {"date": "2026-10-09", "opp": "HK 32 Liptovský Mikuláš", "gf": 4, "ga": 0, "res": "4:0"}], "HK Dukla Michalovce": [{"date": "2026-10-11", "opp": "Vlci Žilina", "gf": 1, "ga": 3, "res": "1:3"}, {"date": "2026-10-09", "opp": "HK Poprad", "gf": 0, "ga": 2, "res": "0:2"}, {"date": "2026-09-29", "opp": "HC Prešov", "gf": 4, "ga": 3, "res": "4:3"}], "HK Poprad": [{"date": "2026-10-10", "opp": "HKM Zvolen", "gf": 4, "ga": 0, "res": "4:0"}, {"date": "2026-10-09", "opp": "HK Dukla Michalovce", "gf": 2, "ga": 0, "res": "2:0"}, {"date": "2026-10-04", "opp": "HK 32 Liptovský Mikuláš", "gf": 5, "ga": 1, "res": "5:1"}], "HKM Zvolen": [{"date": "2026-10-10", "opp": "HK Poprad", "gf": 0, "ga": 4, "res": "0:4"}, {"date": "2026-10-09", "opp": "HC Košice", "gf": 1, "ga": 4, "res": "1:4"}, {"date": "2026-10-02", "opp": "HC Prešov", "gf": 3, "ga": 2, "res": "3:2"}]};
+const TEAMS = {"HC Dynamo Pardubice": "Czechy", "HC Škoda Plzeň": "Czechy", "Bílí Tygři Liberec": "Czechy", "Mountfield HK": "Czechy", "HC Oceláři Třinec": "Czechy", "HC Energie Karlovy Vary": "Czechy", "HC Sparta Praha": "Czechy", "HC Kometa Brno": "Czechy", "Banes Motor České Budějovice": "Czechy", "Rytíři Kladno": "Czechy", "HC Vítkovice Ridera": "Czechy", "HC Olomouc": "Czechy", "BK Mladá Boleslav": "Czechy", "HC Verva Litvínov": "Czechy", "Tappara": "Finlandia", "Ilves": "Finlandia", "HIFK": "Finlandia", "Jokerit": "Finlandia", "TPS": "Finlandia", "Lukko": "Finlandia", "Kärpät": "Finlandia", "KalPa": "Finlandia", "SaiPa": "Finlandia", "Ässät": "Finlandia", "JYP": "Finlandia", "KooKoo": "Finlandia", "Pelicans": "Finlandia", "HPK": "Finlandia", "Jukurit": "Finlandia", "Kiekko-Espoo": "Finlandia", "Sport": "Finlandia", "Adler Mannheim": "Niemcy", "Augsburger Panther": "Niemcy", "Eisbären Berlin": "Niemcy", "ERC Ingolstadt": "Niemcy", "Grizzlys Wolfsburg": "Niemcy", "Iserlohn Roosters": "Niemcy", "Kölner Haie": "Niemcy", "Krefeld Pinguine": "Niemcy", "Löwen Frankfurt": "Niemcy", "Nürnberg Ice Tigers": "Niemcy", "Pinguins Bremerhaven": "Niemcy", "EHC Red Bull München": "Niemcy", "Schwenninger Wild Wings": "Niemcy", "Straubing Tigers": "Niemcy", "Färjestad BK": "Szwecja", "Frölunda HC": "Szwecja", "IF Björklöven": "Szwecja", "Skellefteå AIK": "Szwecja", "Brynäs IF": "Szwecja", "Rögle BK": "Szwecja", "Örebro HK": "Szwecja", "Malmö Redhawks": "Szwecja", "Luleå HF": "Szwecja", "Växjö Lakers": "Szwecja", "Djurgårdens IF": "Szwecja", "HV71": "Szwecja", "Linköping HC": "Szwecja", "Timrå IK": "Szwecja", "Zagłębie Sosnowiec": "Polska", "Polonia Bytom": "Polska", "KH Energa Toruń": "Polska", "GKS Tychy": "Polska", "GKS Katowice": "Polska", "Unia Oświęcim": "Polska", "Cracovia": "Polska", "JKH GKS Jastrzębie": "Polska", "STS Sanok": "Polska", "Podhale Nowy Targ": "Polska", "HK Poprad": "Słowacja", "HK Spišská Nová Ves": "Słowacja", "HC Slovan Bratislava": "Słowacja", "Vlci Žilina": "Słowacja", "HC Košice": "Słowacja", "HK 32 Liptovský Mikuláš": "Słowacja", "HK Dukla Trenčín": "Słowacja", "HC ’05 Banská Bystrica": "Słowacja", "HKM Zvolen": "Słowacja", "HK Dukla Michalovce": "Słowacja", "HK Nitra": "Słowacja", "HC Prešov": "Słowacja"};
+const LOGOS = {"Banes Motor České Budějovice": "https://static.flashscore.com/res/image/data/jJsUbZlC-KIs0ae63.png", "HC Energie Karlovy Vary": "https://static.flashscore.com/res/image/data/xvCaUUUH-AVzSduuU.png", "Rytíři Kladno": "https://static.flashscore.com/res/image/data/bVykKVne-vHeka813.png", "HC Kometa Brno": "https://static.flashscore.com/res/image/data/GrLmwRCN-QmjVAUIf.png", "Bílí Tygři Liberec": "https://static.flashscore.com/res/image/data/EB1OXf7k-KbcQYEbh.png", "HC Verva Litvínov": "https://static.flashscore.com/res/image/data/CWG6DugT-Ia2xiNaT.png", "BK Mladá Boleslav": "https://static.flashscore.com/res/image/data/zRvMi4lC-hhuZJcqF.png", "Mountfield HK": "https://static.flashscore.com/res/image/data/GYN7ywjT-Ye0JUBUS.png", "HC Olomouc": "https://static.flashscore.com/res/image/data/EcvxoVme-tWI3BT4T.png", "HC Dynamo Pardubice": "https://static.flashscore.com/res/image/data/WWwWDCUH-feIYO9Qd.png", "HC Škoda Plzeň": "https://static.flashscore.com/res/image/data/zgspev6k-Aih1Wkwh.png", "HC Sparta Praha": "https://static.flashscore.com/res/image/data/QZfmqOne-MJwZtWIs.png", "HC Oceláři Třinec": "https://static.flashscore.com/res/image/data/Eijd29AN-CbJfA5RB.png", "HC Vítkovice Ridera": "https://static.flashscore.com/res/image/data/rBcmaMRq-WAIuNIa7.png", "Ilves": "https://static.flashscore.com/res/image/data/Eu6waVoe-WUnzea6O.png", "Jukurit": "https://static.flashscore.com/res/image/data/YkmCdWTH-23xYnMzT.png", "Ässät": "https://static.flashscore.com/res/image/data/bg4u9LhT-bywyjRac.png", "Kärpät": "https://static.flashscore.com/res/image/data/SjAwkw6k-fVdpRLcs.png", "HIFK": "https://static.flashscore.com/res/image/data/pIO5mJkC-6yZlWcoM.png", "Sport": "https://static.flashscore.com/res/image/data/MqgzURCN-GEA00An8.png", "Jokerit": "https://static.flashscore.com/res/image/data/dMRLO986-I3dXVYmL.png", "KooKoo": "https://static.flashscore.com/res/image/data/Cj1GAXme-C2m5GYoS.png", "Färjestad BK": "https://static.flashscore.com/res/image/data/nsDu3mne-h2hTqSz7.png", "Frölunda HC": "https://static.flashscore.com/res/image/data/QyAHpHBN-YPeI5fwQ.png", "IF Björklöven": "https://static.flashscore.com/res/image/data/bktLqQAN-Onvl1Iu4.png", "Skellefteå AIK": "https://static.flashscore.com/res/image/data/WCqiKd7k-2skncLub.png", "Djurgårdens IF": "https://static.flashscore.com/res/image/data/jymacKT0-pjG9bfnf.png", "HV71": "https://static.flashscore.com/res/image/data/vgu34XPq-M7gSN02l.png", "Timrå IK": "https://static.flashscore.com/res/image/data/4zRKek7k-E39qpM8k.png", "Linköping HC": "https://static.flashscore.com/res/image/data/4bB4wM6k-v5iJOoio.png", "Eisbären Berlin": "https://static.flashscore.com/res/image/data/SIFamjU0-AgRe0Eld.png", "Adler Mannheim": "https://static.flashscore.com/res/image/data/YFWMNRlC-0ts5gpQ6.png", "Nürnberg Ice Tigers": "https://static.flashscore.com/res/image/data/zgGU6k86-na2GsXrE.png", "EHC Red Bull München": "https://static.flashscore.com/res/image/data/OfUzr2BN-nDszEAyA.png", "Straubing Tigers": "https://static.flashscore.com/res/image/data/K0byBsQq-IijzNvFr.png", "Augsburger Panther": "https://static.flashscore.com/res/image/data/ncMjnkUH-ENetRsHA.png", "Grizzlys Wolfsburg": "https://static.flashscore.com/res/image/data/xxtA2VT0-lhCzbIT0.png", "Krefeld Pinguine": "https://static.flashscore.com/res/image/data/UgjeUykC-MLMyR7Mm.png", "Kölner Haie": "https://static.flashscore.com/res/image/data/0OFwpW6k-nZvf8r48.png", "Löwen Frankfurt": "https://static.flashscore.com/res/image/data/rsiLNGle-bPI70gBm.png", "ERC Ingolstadt": "https://static.flashscore.com/res/image/data/z52c3QVH-lSEYIm6D.png", "Pinguins Bremerhaven": "https://static.flashscore.com/res/image/data/dUceHL7k-6qo952yg.png", "Iserlohn Roosters": "https://static.flashscore.com/res/image/data/fupJKSRq-OQIJh5fD.png", "Schwenninger Wild Wings": "https://static.flashscore.com/res/image/data/xfGZaJBN-EolMKRvS.png", "Polonia Bytom": "https://static.flashscore.com/res/image/data/nDBS75T0-AJpcaZRA.png", "Zagłębie Sosnowiec": "https://static.flashscore.com/res/image/data/8pHucP7k-SMm7UTaa.png", "KH Energa Toruń": "https://static.flashscore.com/res/image/data/Cvs9y7U0-rJkJ9rci.png", "GKS Tychy": "https://static.flashscore.com/res/image/data/j16alSjC-GAUa47TP.png", "Cracovia": "https://static.flashscore.com/res/image/data/WnA2tUBN-2q06KJB8.png", "Unia Oświęcim": "https://static.flashscore.com/res/image/data/ULU025AN-vwLWJ2f2.png", "GKS Katowice": "https://static.flashscore.com/res/image/data/AT4ugChT-rPCA3yXE.png", "JKH GKS Jastrzębie": "https://static.flashscore.com/res/image/data/YN0vBDle-4O61dNgg.png", "STS Sanok": "https://static.flashscore.com/res/image/data/6VHlfTUH-UZTRO4Jk.png", "Podhale Nowy Targ": "https://static.flashscore.com/res/image/data/r7ga46CN-t4UJvmxM.png", "HC Slovan Bratislava": "https://static.flashscore.com/res/image/data/vwlZcU5k-nH14wlUi.png", "Vlci Žilina": "https://static.flashscore.com/res/image/data/jBDHYskC-bJD4ilZ5.png", "HK Poprad": "https://static.flashscore.com/res/image/data/zemSukVH-AFvfRjg8.png", "HC Košice": "https://static.flashscore.com/res/image/data/dfHCxh86-rqPmyElG.png", "HK Spišská Nová Ves": "https://static.flashscore.com/res/image/data/zPSR2QjT-8bUEmnuR.png", "HC ’05 Banská Bystrica": "https://static.flashscore.com/res/image/data/82rsm9VH-O2vzPUWu.png", "HK 32 Liptovský Mikuláš": "https://static.flashscore.com/res/image/data/rszID4Qq-AZUvskKl.png", "HK Dukla Trenčín": "https://static.flashscore.com/res/image/data/z7u1sE5k-tSOF8jfc.png", "HK Nitra": "https://static.flashscore.com/res/image/data/G2niFkBN-2ublrUCh.png", "HK Dukla Michalovce": "https://static.flashscore.com/res/image/data/EZuWGJme-INnudM7I.png", "HKM Zvolen": "https://static.flashscore.com/res/image/data/YDkMdF7k-Kd0aDV87.png", "HC Prešov": "https://static.flashscore.com/res/image/data/tETy8rkC-0E6xuYa3.png", "Tappara": "https://static.flashscore.com/res/image/data/xj6zn9jT-WWqSCbBB.png", "Lukko": "https://static.flashscore.com/res/image/data/tQ05sple-6B13ErSH.png", "Pelicans": "https://static.flashscore.com/res/image/data/Oh2y0B86-rkj8ujyS.png", "Kiekko-Espoo": "https://static.flashscore.com/res/image/data/EiDMFUPq-293U49T4.png", "TPS": "https://static.flashscore.com/res/image/data/tKlOanA6-YmnqXZW0.png", "Luleå HF": "https://static.flashscore.com/res/image/data/U1YcmgUH-fcmuYFHf.png", "Växjö Lakers": "https://static.flashscore.com/res/image/data/SrVWL9jT-WjYSYvmE.png", "KalPa": "https://static.flashscore.com/res/image/data/pIj6Amf5-h623Vaml.png", "SaiPa": "https://static.flashscore.com/res/image/data/KWIzjRT0-rNwMu6T6.png", "JYP": "https://static.flashscore.com/res/image/data/Y9gor6oe-jqN91Qd0.png", "HPK": "https://static.flashscore.com/res/image/data/UVdjA0Rq-WUnzea6O.png", "Brynäs IF": "https://static.flashscore.com/res/image/data/OWHIKhne-E39qpM8k.png", "Rögle BK": "https://static.flashscore.com/res/image/data/fcFA66S0-xbQqdk9J.png", "Örebro HK": "https://static.flashscore.com/res/image/data/8EiuBORq-Mwdv0Qwi.png", "Malmö Redhawks": "https://static.flashscore.com/res/image/data/jekFH0Br-GvG4nCNf.png"};
+const ALIASES = {"Sparta Praga": "HC Sparta Praha", "Sparta Praha": "HC Sparta Praha", "Vitkovice": "HC Vítkovice Ridera", "Vítkovice": "HC Vítkovice Ridera", "Mlada Bolesław": "BK Mladá Boleslav", "Mladá Boleslav": "BK Mladá Boleslav", "Litwinów": "HC Verva Litvínov", "Litvínov": "HC Verva Litvínov", "Czeskie Budziejowice": "Banes Motor České Budějovice", "České Budějovice": "Banes Motor České Budějovice", "Liberec": "Bílí Tygři Liberec", "Karlowe Wary": "HC Energie Karlovy Vary", "Karlovy Vary": "HC Energie Karlovy Vary", "Kladno": "Rytíři Kladno", "Kometa Brno": "HC Kometa Brno", "Pilzno": "HC Škoda Plzeň", "Plzeň": "HC Škoda Plzeň", "Plzen": "HC Škoda Plzeň", "Mountfield HK": "Mountfield HK", "Ołomuniec": "HC Olomouc", "Olomouc": "HC Olomouc", "Pardubice": "HC Dynamo Pardubice", "Trzyniec": "HC Oceláři Třinec", "Třinec": "HC Oceláři Třinec", "Trinec": "HC Oceláři Třinec", "Ingolstadt": "ERC Ingolstadt", "Frankfurt Lowen": "Löwen Frankfurt", "Frankfurt": "Löwen Frankfurt", "Krefeld": "Krefeld Pinguine", "Augsburg": "Augsburger Panther", "Bremerhaven": "Pinguins Bremerhaven", "Eisbaren Berlin": "Eisbären Berlin", "Eisbären Berlin": "Eisbären Berlin", "Iserlohn": "Iserlohn Roosters", "Wolfsburg": "Grizzlys Wolfsburg", "Koeln": "Kölner Haie", "Köln": "Kölner Haie", "Koln": "Kölner Haie", "Nurnberg": "Nürnberg Ice Tigers", "Nürnberg": "Nürnberg Ice Tigers", "Schwenninger": "Schwenninger Wild Wings", "Munchen": "EHC Red Bull München", "München": "EHC Red Bull München", "Mannheim": "Adler Mannheim", "Straubing": "Straubing Tigers", "Cracovia": "Cracovia", "GKS Katowice": "GKS Katowice", "GKS Tychy": "GKS Tychy", "STS Sanok": "STS Sanok", "JKH GKS": "JKH GKS Jastrzębie", "JKH GKS Jastrzębie": "JKH GKS Jastrzębie", "Podhale": "Podhale Nowy Targ", "KH Energa Toruń": "KH Energa Toruń", "Toruń": "KH Energa Toruń", "Unia Oświęcim": "Unia Oświęcim", "Unia Oswiecim": "Unia Oświęcim", "Polonia Bytom": "Polonia Bytom", "Zagłębie Sosnowiec": "Zagłębie Sosnowiec", "Zaglebie Sosnowiec": "Zagłębie Sosnowiec", "Kosice": "HC Košice", "Košice": "HC Košice", "Trencin": "HK Dukla Trenčín", "Trenčín": "HK Dukla Trenčín", "Slovan Bratysława": "HC Slovan Bratislava", "Slovan Bratislava": "HC Slovan Bratislava", "Presov": "HC Prešov", "Prešov": "HC Prešov", "B. Bystrica": "HC ’05 Banská Bystrica", "Banská Bystrica": "HC ’05 Banská Bystrica", "L. Mikulas": "HK 32 Liptovský Mikuláš", "Liptovský Mikuláš": "HK 32 Liptovský Mikuláš", "Nitra": "HK Nitra", "Spisska Nova Ves": "HK Spišská Nová Ves", "Spišská Nová Ves": "HK Spišská Nová Ves", "Zilina": "Vlci Žilina", "Žilina": "Vlci Žilina", "Michalovce": "HK Dukla Michalovce", "Zvolen": "HKM Zvolen", "Poprad": "HK Poprad", "Ilves": "Ilves", "Jukurit": "Jukurit", "Assat": "Ässät", "Ässät": "Ässät", "Karpat": "Kärpät", "Kärpät": "Kärpät", "IFK Helsinki": "HIFK", "HIFK": "HIFK", "Sport": "Sport", "Jokerit": "Jokerit", "KooKoo": "KooKoo", "Farjestad": "Färjestad BK", "Färjestad": "Färjestad BK", "Frolunda": "Frölunda HC", "Frölunda": "Frölunda HC", "IF Bjorkloven": "IF Björklöven", "Bjorkloven": "IF Björklöven", "Skelleftea": "Skellefteå AIK", "Skellefteå": "Skellefteå AIK", "Djurgarden": "Djurgårdens IF", "Djurgården": "Djurgårdens IF", "HV 71": "HV71", "HV71": "HV71", "Timra": "Timrå IK", "Timrå": "Timrå IK", "Linkoping": "Linköping HC", "Linköping": "Linköping HC", "Brynas": "Brynäs IF", "Brynäs": "Brynäs IF", "Rogle": "Rögle BK", "Rögle": "Rögle BK", "Orebro": "Örebro HK", "Örebro": "Örebro HK", "Malmo": "Malmö Redhawks", "Malmö": "Malmö Redhawks", "Lulea": "Luleå HF", "Luleå": "Luleå HF", "Vaxjo": "Växjö Lakers", "Växjö": "Växjö Lakers"};
+const COLORS = {"Czechy": "#1d4ed8", "Finlandia": "#0369a1", "Niemcy": "#b45309", "Szwecja": "#0f766e", "Polska": "#be123c", "Słowacja": "#7c3aed"};
+const OUR = new Set(["Czechy","Finlandia","Niemcy","Szwecja","Polska","Słowacja"]);
+
+let DB = JSON.parse(JSON.stringify(SEED));
+Object.keys(TEAMS).forEach(t => { if (!DB[t]) DB[t] = []; });
+let openTeam = null;
+let todayMatches = [];
+let yestMatches = [];
+
+function setStatus(msg){ document.getElementById("status").textContent = msg || ""; }
+
+function openPasteModal(){
+  document.getElementById("modalBg").classList.add("open");
+}
+function closePasteModal(){
+  document.getElementById("modalBg").classList.remove("open");
+}
+
+function forceSeed(){
+  DB = JSON.parse(JSON.stringify(SEED));
+  Object.keys(TEAMS).forEach(t => { if (!DB[t]) DB[t] = []; });
+  openTeam = null;
+  renderAll();
+  setStatus("Seed: " + Object.keys(DB).filter(k => DB[k].length).length + " drużyn z danymi.");
+}
+function collapseAll(){ openTeam = null; renderForm(); }
+function toggle(team){ openTeam = openTeam === team ? null : team; renderForm(); }
+
+function logoHtml(team, size){
+  const url = LOGOS[team];
+  if (url) return `<img src="${url}" alt="" width="${size||40}" height="${size||40}" loading="lazy" onerror="this.outerHTML='<div class=fallback>?</div>'">`;
+  const ab = team.split(/\s+/).map(w => w[0]).join("").slice(0,3).toUpperCase();
+  return `<div class="fallback">${ab}</div>`;
+}
+function shortName(t){
+  if (!t) return "";
+  // drop common prefixes for compactness
+  return t
+    .replace(/^HC\s+/,"")
+    .replace(/^HK\s+/,"")
+    .replace(/^HKM\s+/,"")
+    .replace(/^BK\s+/,"")
+    .replace(/^ERC\s+/,"")
+    .replace(/^EHC\s+/,"")
+    .replace(/^IF\s+/,"")
+    .replace(/^Adler\s+/,"")
+    .replace(/^Pinguins\s+/,"")
+    .replace(/^Grizzlys\s+/,"")
+    .replace(/^Löwen\s+/,"")
+    .replace(/^Schwenninger\s+/,"")
+    .replace(/^Nürnberg\s+/,"")
+    .replace(/^Augsburger\s+/,"")
+    .replace(/^Iserlohn\s+/,"")
+    .replace(/^Kölner\s+/,"")
+    .replace(/^Krefeld\s+/,"")
+    .replace(/^Straubing\s+/,"")
+    .replace(/^Banes Motor\s+/,"")
+    .replace(/^Bílí Tygři\s+/,"")
+    .replace(/^Rytíři\s+/,"")
+    .replace(/^Mountfield\s+/,"")
+    .replace(/^Oceláři\s+/,"")
+    .replace(/^Energie\s+/,"")
+    .replace(/^Dynamo\s+/,"")
+    .replace(/^Kometa\s+/,"")
+    .replace(/^Škoda\s+/,"")
+    .replace(/^Verva\s+/,"")
+    .replace(/^Red Bull\s+/,"")
+    .replace(/^Wild Wings$/,"Schwenninger")
+    .replace(/^Ice Tigers$/,"Nürnberg")
+    .replace(/^Panther$/,"Augsburg")
+    .replace(/^Roosters$/,"Iserlohn")
+    .replace(/^Haie$/,"Köln")
+    .replace(/^Pinguine$/,"Krefeld")
+    .replace(/^Tigers$/,"Straubing")
+    .replace(/^Frankfurt$/,"Frankfurt")
+    .replace(/^Berlin$/,"Berlin")
+    .replace(/^München$/,"München")
+    .replace(/^Mannheim$/,"Mannheim")
+    .replace(/^Nowy Targ$/,"Podhale")
+    .replace(/^Jastrzębie$/,"JKH")
+    .replace(/^Sosnowiec$/,"Zagłębie")
+    .replace(/^Bratislava$/,"Slovan")
+    .replace(/^Bystrica$/,"B. Bystrica")
+    .replace(/^Mikuláš$/,"L. Mikuláš")
+    .replace(/^Nová Ves$/,"S.N. Ves")
+    .replace(/^Michalovce$/,"Michalovce")
+    .replace(/^Trenčín$/,"Trenčín")
+    .replace(/^Žilina$/,"Žilina");
+}
+
+function renderToday(){
+  const el = document.getElementById("todayBox");
+  if (!todayMatches.length){
+    el.innerHTML = `<div class="empty-box" onclick="openPasteModal()"><strong>Brak wyników → kliknij aby dodać</strong>Wklej listę meczów z Flashscore (dziś)</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="match-list">` + todayMatches.map(m => `
+    <div class="match-card">
+      <div class="row">
+        <div class="team home"><span>${shortName(m.home)}</span>${logoHtml(m.home,22)}</div>
+        <div class="score">–</div>
+        <div class="team away">${logoHtml(m.away,22)}<span>${shortName(m.away)}</span></div>
+      </div>
+      <div class="meta"><span class="badge wait">dziś</span> ${m.league||""}</div>
+    </div>`).join("") + `</div>`;
+}
+
+function renderYest(){
+  const el = document.getElementById("yestBox");
+  if (!yestMatches.length){
+    el.innerHTML = `<div class="empty-box" onclick="openPasteModal()"><strong>Brak wyników → kliknij aby dodać</strong>Wklej zakończone mecze z Flashscore</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="match-list">` + yestMatches.map(m => `
+    <div class="match-card">
+      <div class="row">
+        <div class="team home"><span>${shortName(m.home)}</span>${logoHtml(m.home,22)}</div>
+        <div class="score">${m.hg}:${m.ag}</div>
+        <div class="team away">${logoHtml(m.away,22)}<span>${shortName(m.away)}</span></div>
+      </div>
+      <div class="meta"><span class="badge done">${m.status||"koniec"}</span> ${m.league||""}</div>
+    </div>`).join("") + `</div>`;
+}
+
+function renderForm(){
+  const root = document.getElementById("root");
+  root.innerHTML = "";
+  const byL = {};
+  Object.entries(TEAMS).forEach(([t,l]) => { if (!byL[l]) byL[l] = []; byL[l].push(t); });
+  ["Czechy","Finlandia","Niemcy","Szwecja","Polska","Słowacja"].forEach(league => {
+    if (!byL[league]) return;
+    const sec = document.createElement("div");
+    sec.className = "league";
+    sec.innerHTML = `<div class="league-title"><span class="dot" style="background:${COLORS[league]||'#64748b'}"></span>${league}</div>`;
+    const tiles = document.createElement("div");
+    tiles.className = "tiles";
+    byL[league].forEach(team => {
+      const n = (DB[team]||[]).length;
+      const tile = document.createElement("div");
+      tile.className = "tile" + (openTeam === team ? " active" : "");
+      tile.title = team;
+      tile.onclick = () => toggle(team);
+      tile.innerHTML = logoHtml(team, 32) + `<div class="cnt">${n} mecz.</div>`;
+      tiles.appendChild(tile);
+    });
+    sec.appendChild(tiles);
+    if (openTeam && TEAMS[openTeam] === league) {
+      const det = document.createElement("div");
+      det.className = "detail";
+      const matches = DB[openTeam] || [];
+      let rows = matches.map(m => {
+        const cls = m.gf > m.ga ? "w" : (m.gf < m.ga ? "l" : "");
+        return `<tr><td>${m.date}</td><td>${m.opp}</td><td class="${cls}">${m.res}</td><td class="g">${m.gf}</td></tr>`;
+      }).join("");
+      if (!rows) rows = `<tr><td colspan="4" class="empty">brak danych formy</td></tr>`;
+      det.innerHTML = `<h3>${logoHtml(openTeam,24)} ${openTeam}</h3>
+        <table><thead><tr><th>Data</th><th>Przeciwnik</th><th>Wynik</th><th>Gole</th></tr></thead><tbody>${rows}</tbody></table>`;
+      sec.appendChild(det);
+    }
+    root.appendChild(sec);
+  });
+}
+
+function renderAll(){ renderToday(); renderYest(); renderForm(); }
+
+function resolveName(raw){
+  if (!raw) return null;
+  const t = raw.trim();
+  if (TEAMS[t]) return t;
+  if (ALIASES[t]) return ALIASES[t];
+  for (const [a, full] of Object.entries(ALIASES)) {
+    if (t.toLowerCase() === a.toLowerCase()) return full;
+  }
+  for (const name of Object.keys(TEAMS)) {
+    if (name.toLowerCase().includes(t.toLowerCase()) || t.toLowerCase().includes(name.toLowerCase().split(" ").pop()))
+      return name;
+  }
+  return null;
+}
+
+function readScoreAt(lines, i){
+  const a = lines[i], b = lines[i+1];
+  if (a && /^\d{2,3}$/.test(a)) {
+    const s = a;
+    if (s.length === 2) return [parseInt(s[0],10), parseInt(s[1],10), i+1];
+    const twoOne = [parseInt(s.slice(0,2),10), parseInt(s.slice(2),10)];
+    const oneTwo = [parseInt(s[0],10), parseInt(s.slice(1),10)];
+    if (s[0] === "1" && twoOne[0] >= 10) return [twoOne[0], twoOne[1], i+1];
+    return [oneTwo[0], oneTwo[1], i+1];
+  }
+  if (a && b && /^\d{1,2}$/.test(a) && /^\d{1,2}$/.test(b)) {
+    return [parseInt(a,10), parseInt(b,10), i+2];
+  }
+  return null;
+}
+
+function isFinishedStatus(line){
+  const l = line.trim().toLowerCase();
+  return l === "koniec" || l === "po dogrywce" || l === "po rzutach karnych" || l === "po rzutach"
+    || l.startsWith("po dogrywce") || l.startsWith("po rzutach");
+}
+
+function leagueFromHeader(line){
+  const u = line.toUpperCase();
+  if (u.includes("EXTRALIGA") && !u.includes("SŁOW") && !u.includes("SLOW")) return "Czechy";
+  if (u.includes("CZECH")) return "Czechy";
+  if (u.includes("LIIGA") || u.includes("FINLAND")) return "Finlandia";
+  if (u.includes("DEL") || u.includes("NIEMC")) return "Niemcy";
+  if (u.includes("SHL") || u.includes("SZWEC")) return "Szwecja";
+  if (u.includes("TAURON") || u.includes("POLSK") || u.includes("PHL")) return "Polska";
+  if (u.includes("TIPSPORT") || u.includes("SŁOWAC") || u.includes("SLOWAC")) return "Słowacja";
+  return null;
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function yestStr(){
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function addForm(team, opp, gf, ga, date){
+  if (!DB[team]) DB[team] = [];
+  const res = gf + ":" + ga;
+  if (DB[team].some(m => m.date === date && m.opp === opp)) return false;
+  DB[team].unshift({ date, opp, res, gf, ga });
+  if (DB[team].length > 8) DB[team] = DB[team].slice(0, 8);
+  return true;
+}
+
+function runParse(){
+  const text = document.getElementById("pasteArea").value || "";
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const finished = [];
+  const pending = [];
+  let curLeague = null;
+  let i = 0;
+  const log = [];
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const lg = leagueFromHeader(line);
+    if (lg) { curLeague = lg; i++; continue; }
+    if (/^(CZECHY|FINLANDIA|NIEMCY|SZWECJA|POLSKA|SŁOWACJA|SLOWACJA|Tabela|TABLE)/i.test(line)) { i++; continue; }
+    if (/ICE Hockey|AUSTRIA|KHL|VHL|NHL|Metal Ligaen|OHL|WHL/i.test(line)) {
+      curLeague = "SKIP"; i++; continue;
+    }
+
+    if (isFinishedStatus(line)) {
+      const status = line;
+      let home = lines[i+1], away = lines[i+2];
+      if (!home || !away) { i++; continue; }
+      if (isFinishedStatus(home) || leagueFromHeader(home)) { i++; continue; }
+
+      const scPack = readScoreAt(lines, i+3);
+      let hg, ag, nextI;
+      if (scPack) {
+        [hg, ag, nextI] = scPack;
+      } else {
+        log.push("brak wyniku: " + home + " – " + away + " (raw=" + (lines[i+3]||"?") + ")");
+        i += 3;
+        while (i < lines.length && /^\d+$/.test(lines[i]) && lines[i].length <= 2) i++;
+        continue;
+      }
+
+      const homeN = resolveName(home);
+      const awayN = resolveName(away);
+      i = nextI;
+      while (i < lines.length && /^\d+$/.test(lines[i]) && lines[i].length <= 2) i++;
+
+      if (curLeague === "SKIP") {
+        log.push("skip liga: " + home + " – " + away);
+        continue;
+      }
+      const inDb = (homeN && TEAMS[homeN]) || (awayN && TEAMS[awayN]);
+      if (!inDb) {
+        log.push("poza 6 ligami: " + home + " – " + away);
+        continue;
+      }
+      const date = yestStr();
+      if (homeN && TEAMS[homeN]) addForm(homeN, awayN || away, hg, ag, date);
+      if (awayN && TEAMS[awayN]) addForm(awayN, homeN || home, ag, hg, date);
+      finished.push({ home: homeN||home, away: awayN||away, hg, ag, status, league: curLeague || "?" });
+      continue;
+    }
+
+    // pending: look for two consecutive team-like names (no status)
+    // simple: if resolveName works for two consecutive lines and next is -- or time
+    const hN = resolveName(line);
+    const aN = resolveName(lines[i+1] || "");
+    if (hN && aN && TEAMS[hN] && TEAMS[aN]) {
+      pending.push({ home: hN, away: aN, league: curLeague || TEAMS[hN] });
+      i += 2;
+      // skip trailing -- or digits
+      while (i < lines.length && (lines[i] === "--" || /^\d{1,2}:\d{2}$/.test(lines[i]) || lines[i] === "-")) i++;
+      continue;
+    }
+    i++;
+  }
+
+  yestMatches = finished.concat(yestMatches).slice(0, 80);
+  // dedupe today
+  const seenT = new Set(todayMatches.map(m => m.home+"|"+m.away));
+  pending.forEach(m => {
+    const k = m.home+"|"+m.away;
+    if (!seenT.has(k)) { todayMatches.push(m); seenT.add(k); }
+  });
+  todayMatches = todayMatches.slice(0, 40);
+
+  const logEl = document.getElementById("parseLog");
+  logEl.innerHTML = `<b>Zakończone:</b> ${finished.length} · <b>Dziś:</b> ${pending.length}<br>` +
+    finished.map(m => `${m.home} ${m.hg}:${m.ag} ${m.away}`).join("<br>") +
+    (pending.length ? "<br><br><b>Zaplanowane:</b><br>" + pending.map(m => `${m.home} – ${m.away}`).join("<br>") : "") +
+    (log.length ? "<br><br><b>Uwagi:</b><br>" + log.slice(0,25).join("<br>") : "");
+
+  setStatus(`Dopisano ${finished.length} zakończonych, ${pending.length} na dziś.`);
+  renderAll();
+  // keep modal open so user sees log; or close after short delay
+}
+
+renderAll();
+setStatus("Seed załadowany · " + Object.keys(DB).filter(k => DB[k].length).length + " drużyn z formą.");
+</script>
+</body>
+</html>
